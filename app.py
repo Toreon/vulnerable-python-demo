@@ -22,8 +22,8 @@ def loginform():
         <h1>Log in</h1>
 
         <form action="./authenticate/" method="post">
-            Username <input name="user_name" type="text" /><br />
-            Password <input name="user_password" type="password" /><br />
+            Username: <input name="user_name" id="user_name" autocomplete="off" type="text" /><br />
+            Password: <input name="user_password" id="user_password" autocomplete="off" type="password" /><br />
             <input type="submit" value="Log in">
         </form>
 
