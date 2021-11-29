@@ -20,11 +20,9 @@ stages:
     - task: CmdLine@2
       displayName: Run Application container
       inputs:
-#        script: |
-#          docker run -it -p 8181:8181 --net demo-network --ip 172.20.0.10 python-devsecops-demo
         script: |
-          docker run -d --net demo-network --ip 172.20.0.10 python-devsecops-demo
-        failOnStderr: true
+          docker run -it -p 8181:8181 --net demo-network --ip 172.20.0.10 python-devsecops-demo
+          
     - task: CmdLine@2
       displayName: Run ZAP container
       inputs:
