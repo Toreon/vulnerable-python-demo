@@ -6,26 +6,30 @@ stages:
     steps:
 
     - task: CmdLine@2
-      displayName: Prepare networking
+      displayName: Prepare network
+      enabled: true
       inputs:
         script: |
           docker network create --subnet=172.20.0.0/24 demo-network
 
     - task: CmdLine@2
-      displayName: Build Application container
+      displayName: Build app image
+      enabled: true
       inputs:
         script: |
           docker build -t python-devsecops-demo .
 
     - task: CmdLine@2
-      displayName: Run Application container
+      displayName: Run app container
+      enabled: true
       inputs:
         script: |
           docker run -it -p 8181:8181 --net demo-network --ip 172.20.0.10 python-devsecops-demo
 
+
     - task: CmdLine@2
+      enabled: true
       displayName: Run full ZAP scan
       inputs:
         script: |
           docker run -t --net demo-network owasp/zap2docker-stable:2.11.0 zap-full-scan.py -t http://172.20.0.10:8181
-
