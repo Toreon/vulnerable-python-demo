@@ -1,35 +1,75 @@
 stages:
-- stage: Testing
+- stage: Build
   jobs:
-  - job: DAST
-    displayName: DAST with OWASP ZAP
+  - job: buildPush
+    displayName: Build and push
     steps:
 
     - task: CmdLine@2
-      displayName: Prepare network
+      displayName: Log in to dockerhub
       enabled: true
       inputs:
         script: |
-          docker network create --subnet=172.20.0.0/24 demo-network
+         echo "$(DOCKER_ACCESS_TOKEN)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
 
     - task: CmdLine@2
       displayName: Build app image
       enabled: true
       inputs:
         script: |
-          docker build -t python-devsecops-demo .
+          docker build -t $(DOCKER_USERNAME)/vulnerable-python-demo:latest .
 
     - task: CmdLine@2
-      displayName: Run app container
+      displayName: Push app image
       enabled: true
       inputs:
         script: |
-          docker run -it -p 8181:8181 --net demo-network --ip 172.20.0.10 python-devsecops-demo
+          docker push $(DOCKER_USERNAME)/vulnerable-python-demo:latest
 
+    - task: CmdLine@2
+      displayName: Log out of dockerhub
+      enabled: true
+      inputs:
+        script: |
+         docker logout
 
+- stage: Test
+  jobs:
+  - job: DAST
+    displayName: DAST with OWASP ZAP
+    steps:
+
+    - task: CmdLine@2
+      displayName: Prepare networking
+      enabled: true
+      inputs:
+        script: |
+          docker network create --subnet=172.20.0.0/24 demo-network
+          
+    - task: CmdLine@2
+      displayName: Log in to dockerhub
+      enabled: true
+      inputs:
+        script: |
+         echo "$(DOCKER_ACCESS_TOKEN)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
+
+    - task: CmdLine@2
+      displayName: Run app container from dockerhub
+      enabled: true
+      inputs:
+        script: |
+          docker run -d --net demo-network --ip 172.20.0.10 $(DOCKER_USERNAME)/vulnerable-python-demo:latest
+
+    - task: CmdLine@2
+      displayName: Log out of dockerhub
+      enabled: true
+      inputs:
+        script: |
+         docker logout
+    
     - task: CmdLine@2
       enabled: true
       displayName: Run full ZAP scan
       inputs:
         script: |
-          docker run -t --net demo-network owasp/zap2docker-stable:2.11.0 zap-full-scan.py -t http://172.20.0.10:8181
+          docker run --net demo-network owasp/zap2docker-stable:2.11.0 zap-full-scan.py -t http://172.20.0.10:8181
